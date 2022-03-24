@@ -17,18 +17,13 @@ import {
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 
-import WalletConnectProvider from '@walletconnect/web3-provider';
+import WalletConnectProvider from '@maticnetwork/walletconnect-provider';
+import CoinbaseWalletSDK from '@coinbase/wallet-sdk';
+import QRCodeModal from '@walletconnect/qrcode-modal';
 import { providers } from 'ethers';
 import { Web3Provider } from '@ethersproject/providers';
-//import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom"
-import * as nearAPI from 'near-api-js';
-import { WalletConnection } from 'near-api-js';
-
-const { keyStores, connect } = nearAPI;
 
 declare var window: any; // TODO: specifically extend type to valid injected objects.
-const PhantomWalletAdapter =
-  require('@solana/wallet-adapter-phantom/lib/cjs/index').PhantomWalletAdapter;
 
 function App() {
   const defaultCurrency = 'Select a Currency';
@@ -43,9 +38,7 @@ function App() {
   const [bundlerHttpAddress, setBundlerAddress] = React.useState<string>(
     'https://node1.bundlr.network'
   );
-  // const [bundlerHttpAddress, setBundlerAddress] = React.useState<string>(
-  //   'https://devnet.bundlr.network'
-  // );
+
   const [fundAmount, setFundingAmount] = React.useState<string>();
   const [withdrawAmount, setWithdrawAmount] = React.useState<string>();
   const [provider, setProvider] = React.useState<Web3Provider>();
@@ -230,129 +223,44 @@ function App() {
       return provider;
     },
     WalletConnect: async (c: any) => {
-      return await connectWeb3(await new WalletConnectProvider(c).enable());
+      const maticProvider = new WalletConnectProvider({
+        host: `https://rpc-mumbai.matic.today`,
+        callbacks: {
+          onConnect: console.log('connected'),
+          onDisconnect: console.log('disconnected!'),
+        },
+        qrcodeModal: QRCodeModal,
+      });
+      return await connectWeb3(maticProvider);
     },
-    Phantom: async (c: any) => {
-      if (window.solana.isPhantom) {
-        await window.solana.connect();
-        const p = new PhantomWalletAdapter();
-        await p.connect();
-        return p;
-      }
-    },
-    'wallet.near.org': async (c: any) => {
-      const near = await connect(c);
-      const wallet = new WalletConnection(near, 'bundlr');
-      if (!wallet.isSignedIn()) {
-        toast({
-          status: 'info',
-          title: 'You are being redirected to authorize this application...',
-        });
-        window.setTimeout(() => {
-          wallet.requestSignIn();
-        }, 4000);
-        // wallet.requestSignIn();
-      } else if (
-        !(await c.keyStore.getKey(wallet._networkId, wallet.getAccountId()))
-      ) {
-        toast({
-          status: 'warning',
-          title:
-            "Click 'Connect' to be redirected to authorize access key creation.",
-        });
-      }
-      return wallet;
+    CoinbaseWallet: async (c: any) => {
+      const coinbaseWallet = new CoinbaseWalletSDK({
+        appName: 'bundlr-upload',
+        appLogoUrl: 'https://example.com/logo.png',
+        darkMode: false,
+      });
+
+      console.log('===== coinbaseWallet ====', coinbaseWallet);
+
+      const walletProvider = coinbaseWallet.makeWeb3Provider(
+        c.rpcUrls[0],
+        c.chianId
+      );
+
+      console.log('===== walletProvider ====', walletProvider);
+      return await connectWeb3(walletProvider);
     },
   } as any;
 
-  const ethProviders = ['MetaMask', 'WalletConnect'];
+  const ethProviders = ['MetaMask', 'WalletConnect', 'CoinbaseWallet'];
 
   const currencyMap = {
-    // bnb: {
-    //   providers: ethProviders,
-    //   opts: {
-    //     chainId: 97,
-    //     chainName: 'Binance Smart Chain Testnet RPC',
-    //     rpcUrls: ['	https://testnet.bscscan.com'],
-    //   },
-    // },
-    // ethereum: {
-    //   providers: ethProviders,
-    //   opts: {
-    //     chainId: 3,
-    //     chainName: 'Ropsten Test Network',
-    //     rpcUrls: ['https://ropsten.etherscan.io'],
-    //   },
-    // },
-    // matic: {
-    //   providers: ethProviders,
-    //   opts: {
-    //     chainId: 80001,
-    //     chainName: 'Mumbai Testnet',
-    //     rpcUrls: ['https://rpc-mumbai.maticvigil.com'],
-    //   },
-    // },
-    solana: {
-      providers: ['Phantom'],
-      opts: {},
-    },
-    ethereum: {
-      providers: ethProviders,
-      opts: {
-        chainId: 1,
-        chainName: 'Ethereum Mainnet',
-        rpcUrls: ['https://mainnet.infura.io/v3/'],
-      },
-    },
     matic: {
       providers: ethProviders,
       opts: {
         chainId: 137,
         chainName: 'Polygon Mainnet',
-        rpcUrls: ['https://polygon-rpc.com'],
-      },
-    },
-    arbitrum: {
-      providers: ethProviders,
-      opts: {
-        chainName: 'Arbitrum One',
-        chainId: 42161,
-        rpcUrls: ['https://arb1.arbitrum.io/rpc'],
-      },
-    },
-    bnb: {
-      providers: ethProviders,
-      opts: {
-        chainName: 'Binance Smart Chain',
-        chainId: 56,
-        rpcUrls: ['https://bsc-dataseed.binance.org/'],
-      },
-    },
-    avalanche: {
-      providers: ethProviders,
-      opts: {
-        chainName: 'Avalanche Network',
-        chainId: 43114,
-        rpcUrls: ['https://api.avax.network/ext/bc/C/rpc'],
-      },
-    },
-    boba: {
-      providers: ethProviders,
-      opts: {
-        chainName: 'BOBA L2',
-        chainId: 288,
-        rpcUrls: ['https://mainnet.boba.network'],
-      },
-    },
-    near: {
-      providers: ['wallet.near.org'],
-      opts: {
-        networkId: 'mainnet',
-        keyStore: new keyStores.BrowserLocalStorageKeyStore(),
-        nodeUrl: 'https://rpc.mainnet.near.org',
-        walletUrl: 'https://wallet.mainnet.near.org',
-        helperUrl: 'https://helper.mainnet.near.org',
-        explorerUrl: 'https://explorer.mainnet.near.org',
+        rpcUrls: ['https://rpc-mumbai.matic.today'],
       },
     },
   } as any;
