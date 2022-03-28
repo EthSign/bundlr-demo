@@ -16,7 +16,6 @@ import { Tooltip } from "@chakra-ui/react";
 import { connectors } from "./connectors";
 import { toHex, truncateAddress } from "./utils";
 import { WebBundlr } from "@bundlr-network/client";
-import { Biconomy } from "@biconomy/mexa";
 
 export default function Home() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -174,17 +173,6 @@ export default function Home() {
     }
   }, [chainId]);
 
-  useEffect(() => {
-    if (library) {
-      const biconomy = new Biconomy(library, {
-        apiKey: "tpkapBz2J.18f4ffa5-a0d1-4a64-b65c-bc130b44cd98",
-        debug: true,
-      });
-
-      library.Web3Provider(biconomy);
-    }
-  }, [library]);
-
   const enableEth = async () => {
     await window.ethereum.enable();
     const cId = `0x${chainId.toString(16)}`;
@@ -245,7 +233,6 @@ export default function Home() {
     }
     toast({ status: "success", title: `Connected to ${bundlerHttpAddress}` });
 
-    console.log("==== bundlr ====", bundlr);
     setAddress(bundlr?.address);
     setBundler(bundlr);
   };

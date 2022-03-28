@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import { ChakraProvider } from "@chakra-ui/react";
 import { Web3ReactProvider } from "@web3-react/core";
 import { ethers } from "ethers";
+import { BiconomyProvider } from "./useBiconomy";
 
 import App from "./App";
 
@@ -17,7 +18,9 @@ ReactDOM.render(
   <StrictMode>
     <ChakraProvider>
       <Web3ReactProvider getLibrary={getLibrary}>
-        <App />
+        <BiconomyProvider>
+          <App />
+        </BiconomyProvider>
       </Web3ReactProvider>
     </ChakraProvider>
   </StrictMode>,
