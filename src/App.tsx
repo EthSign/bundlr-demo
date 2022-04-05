@@ -61,7 +61,7 @@ function App() {
   const handleFileClick = () => {
     var fileInputEl = document.createElement('input');
     fileInputEl.type = 'file';
-    fileInputEl.accept = 'image/*';
+    fileInputEl.accept = 'application/pdf';
     fileInputEl.style.display = 'none';
     document.body.appendChild(fileInputEl);
     fileInputEl.addEventListener('input', function (e) {
@@ -98,7 +98,7 @@ function App() {
   const uploadFile = async () => {
     if (img) {
       await bundler?.uploader
-        .upload(img, [{ name: 'Content-Type', value: 'image/png' }])
+        .upload(img, [{ name: 'Content-Type', value: 'application/pdf' }])
         .then((res) => {
           toast({
             status:
